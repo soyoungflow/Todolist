@@ -3,7 +3,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>{% block title %}Todo App{% endblock %}</title>
+  <title>{% block title %}Auth{% endblock %}</title>
 
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -11,13 +11,9 @@
 </head>
 
 <body>
-  {% include "header.html" %}
-
-  <main class="container">
+  <main class="auth-wrap">
     {% block content %}{% endblock %}
   </main>
-
-  {% include "footer.html" %}
 
   {% block scripts %}{% endblock %}
 </body>
