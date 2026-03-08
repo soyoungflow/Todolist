@@ -32,7 +32,7 @@ SECRET_KEY = env("DJANGO_SECRET_KEY", default="django-insecure-dev-only-secret-k
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG", default=True)
 
-ALLOWED_HOSTS = [env.list("DJANGO_ALLOWED_HOSTS", default=["127.0.0.1", "localhost"])]
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["127.0.0.1", "localhost"])
 
 
 # Application definition

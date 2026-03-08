@@ -1,5 +1,6 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
+from django.contrib.auth import get_user_model
 
 from .models import Todo
 
@@ -14,15 +15,13 @@ class TodoViewSetCRUDTests(TestCase):
     - destroy:  DELETE /todo/viewsets/view/<pk>/
     """
 
-    def setUp(self):
-        self.client = APIClient()
-        self.base_url = "/todo/viewsets/view/"
-        self.todo = Todo.objects.create(
-            name="운동",
-            description="스쿼트 50회",
-            complete=False,
-            exp=10,
-        )
+
+def setUp(self):
+    self.client = APIClient()
+    self.base_url = "/todo/viewsets/view/"
+
+    User = get_user_model()
+    self.user = User.objects.create_user(username="testuser", password="1234")
 
     def test_list(self):
         res = self.client.get(self.base_url)
@@ -34,6 +33,7 @@ class TodoViewSetCRUDTests(TestCase):
 
     def test_create(self):
         payload = {
+            "user": self.user.id,
             "name": "공부",
             "description": "DRF",
             "complete": False,

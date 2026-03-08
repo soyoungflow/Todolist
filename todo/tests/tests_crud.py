@@ -1,8 +1,8 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
+from django.contrib.auth import get_user_model
 
 from ..models import Todo
-
 
 # ---------------------------------------------------------
 # ✅ Todo API CRUD 동작을 검증하는 테스트 클래스
@@ -11,6 +11,8 @@ from ..models import Todo
 # - 테스트용 임시 DB가 생성됨
 # - 각 테스트 함수 실행 전 DB가 초기화됨
 # - 실제 DB에 영향을 주지 않음
+
+
 class TodoAPITests(TestCase):
 
     # -----------------------------------------------------
@@ -21,9 +23,15 @@ class TodoAPITests(TestCase):
         # → 실제 브라우저 대신 API 요청을 보내는 역할
         self.client = APIClient()
 
+        User = get_user_model()
+        self.user = User.objects.create_user(username="testuser", password="1234")
+
         # 테스트용 기본 Todo 1개 생성
         # → retrieve / update / delete 테스트에서 사용
+        self.client.force_authenticate(user=self.user)
+
         self.todo = Todo.objects.create(
+            user=self.user,
             name="운동",
             description="스쿼트 50회",
             complete=False,
@@ -48,6 +56,7 @@ class TodoAPITests(TestCase):
     # -----------------------------------------------------
     def test_create(self):
         payload = {
+            "user": self.user.id,
             "name": "공부",
             "description": "DRF",
             "complete": False,
