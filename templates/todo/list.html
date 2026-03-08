@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="todocontainer"></div>
+
+<div class="pagination">
+    <button id="prevBtn">이전</button>
+    <span id="pageInfo"></span>
+    <button id="nextBtn">다음</button>
+</div>
+
+<button id="createBtn">Todo 등록하기</button>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const LOGIN_PAGE_URL = "/login/";
+    let currentPage = 1;
+
+    const api = axios.create({
+        baseURL: "/",
+        withCredentials: true,
+    });
+
+    api.interceptors.request.use(config => {
+        const csrfToken = document.cookie
+            .split("; ")
+            .find(row => row.startsWith("csrftoken="))
+            ?.split("=")[1];
+
+        config.headers = config.headers || {};
+        if (csrfToken) config.headers["X-CSRFToken"] = csrfToken;
+        return config;
+    });
+
+    api.interceptors.response.use(
+        res => res,
+        err => {
+            const status = err.response?.status;
+            if (status === 401 || status === 403) {
+                window.location.href = LOGIN_PAGE_URL;
+                return Promise.reject(err);
+            }
+            return Promise.reject(err);
+        }
+    );
+
+    function loadPage(page) {
+        api.get(`/todo/viewsets/view/?page=${page}`)
+            .then(res => {
+                const data = res.data;
+
+                renderTodos(data.data || data.results || []);
+                updatePaginationUI(data);
+
+                currentPage = data.current_page || page;
+            })
+            .catch(err => console.error("페이지 로드 실패", err));
+    }
+
+    function renderTodos(todos) {
+        const container = document.querySelector(".todocontainer");
+        container.innerHTML = "";
+
+        if (!todos || todos.length === 0) {
+            container.innerHTML = "<p>등록된 Todo 없음</p>";
+            return;
+        }
+
+        todos.forEach(todo => {
+            const div = document.createElement("div");
+            div.className = "todo-item";
+            div.dataset.id = todo.id;
+
+            const imageSrc = todo.image
+                ? (todo.image.startsWith("http") ? todo.image : `${location.origin}${todo.image}`)
+                : "";
+
+            div.innerHTML = `
+                <p><strong>제목:</strong> ${todo.name ?? ""}</p>
+                <p><strong>설명:</strong> ${todo.description ?? ""}</p>
+                <p><strong>완료 여부:</strong> ${todo.complete ? "완료" : "미완료"}</p>
+                <p><strong>exp:</strong> ${todo.exp ?? 0}</p>
+                ${imageSrc ? `<img src="${imageSrc}" style="max-width:200px;">` : ""}
+                <hr>
+            `;
+
+            div.addEventListener("click", () => {
+                window.location.href = `/todo/detail/${todo.id}/`;
+            });
+
+            container.appendChild(div);
+        });
+    }
+
+    function updatePaginationUI(data) {
+        const current = data.current_page ?? currentPage ?? 1;
+        const total = data.page_count ?? "?";
+
+        document.getElementById("pageInfo").innerText = `${current} / ${total}`;
+        document.getElementById("prevBtn").disabled = !data.previous;
+        document.getElementById("nextBtn").disabled = !data.next;
+    }
+
+    document.getElementById("prevBtn").addEventListener("click", () => {
+        if (currentPage > 1) loadPage(currentPage - 1);
+    });
+
+    document.getElementById("nextBtn").addEventListener("click", () => {
+        loadPage(currentPage + 1);
+    });
+
+    document.getElementById("createBtn").addEventListener("click", () => {
+        window.location.href = "/todo/create/";
+    });
+
+    loadPage(1);
+});
+</script>
+{% endblock %}
